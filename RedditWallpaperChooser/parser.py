@@ -6,7 +6,7 @@ import threading
 
 from .wallpaper import WebWallpaper
 from .logger import logger
-from .constants import REDDIT_USER_AGENT
+from .constants import REDDIT_USER_AGENT, LIMIT
 
 
 class RedditParser(object):
@@ -32,7 +32,7 @@ class RedditParser(object):
         :subreddit: Subreddit to be parsed.
         """
         logger.info("Fetching wallpapers from 'r/%s'.", subreddit)
-        r_walls = self.r.get_subreddit(subreddit).get_hot(limit=5)
+        r_walls = self.r.get_subreddit(subreddit).get_hot(limit=LIMIT)
 
         self.semaphore.acquire()
         self.walls |= {WebWallpaper(str(w), w.url) for w in r_walls if not w.is_self}

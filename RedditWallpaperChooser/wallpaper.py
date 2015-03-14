@@ -10,8 +10,12 @@ import threading
 import json
 import zlib
 
-from .constants import ACCEPTED_CONTENT_TYPES, OUTPUT_PATH
+from PIL import Image
+
+from .constants import ACCEPTED_CONTENT_TYPES, OUTPUT_PATH, SIZE, RATIO
 from .logger import logger
+
+CONSTANT_RATIO = round(float(RATIO[0]) / RATIO[1], 5)
 
 
 class WebWallpaper(object):
@@ -27,10 +31,9 @@ class WebWallpaper(object):
         self.url = url
 
         self.storage = OUTPUT_PATH
-
-        self.event = threading.Event()
-        # TODO: lazy initialization?
         self.thread = threading.Thread(target=self._store)
+
+        self._size = None
 
     def __eq__(self, other):
         return (isinstance(other, self.__class__)
@@ -38,6 +41,18 @@ class WebWallpaper(object):
 
     def __hash__(self):
         return hash(self.url)
+
+    def __str__(self):
+        s = "{} - {})".format(self.name, self.url)
+
+        if (self.size):
+            s += " - {}x{} - {}".format(
+                self.size[0], self.size[1],
+                ":".join([str(r) for r in RATIO])
+                if self.ratio == CONSTANT_RATIO else self.ratio
+            )
+
+        return s
 
     def _store(self):
         """Download and store the wallpaper on disk.
@@ -48,16 +63,14 @@ class WebWallpaper(object):
             # We have the wallpaper in cache and are able to read its header
             # info
             logger.debug("Cache hit for wallpaper: '%s'", self.url)
-            self.event.set()
         else:  # request the wallpaper to the remote
             r = requests.get(self.url, stream=True)
 
             self.contentType = r.headers.get('content-type', None)
             self.contentSize = r.headers.get('content-size', None)
 
-            self.event.set()
-
-            if not self.check():  # We don't download it if it doesn't pass the check
+            # We don't download it if it doesn't pass the check
+            if not self.check():
                 r.close()
                 return
 
@@ -109,36 +122,54 @@ class WebWallpaper(object):
 
     def get_header_info(self, store=True):
         """Request url header to find the content types and sizes of the wallpaper."""
-        if store:  # While doing the header request, store the wallpaper too.
-            self.thread.start()
-            self.event.wait()
-        else:
-            r = requests.head(self.url)
+        self.thread.start()
+        return self.thread
 
-            self.contentType = r.headers.get('content-type', None)
-            self.contentSize = r.headers.get('content-size', None)
-
-    def check(self):
+    def check(self, size=False, aspect_ratio=False):
         """Check if the wallpaper can actually be used.
 
         :returns: boolean.
         """
         try:
-            return self.contentType in ACCEPTED_CONTENT_TYPES
+            content_type = self.contentType in ACCEPTED_CONTENT_TYPES
+            if not content_type:
+                return False
+            if not size and not aspect_ratio:
+                return content_type
+
+            image_size = self.size
+            size_fits = all([image_size[i] >= SIZE[i] for i in range(2)])
+            aspect_ratio_fits = CONSTANT_RATIO == self.ratio
+
+            if (size and aspect_ratio):
+                return size_fits and aspect_ratio_fits
+            elif (size):
+                return size_fits
+            else:  # aspect_ratio_fits
+                return aspect_ratio_fits
         except AttributeError:
-            logger.warning("check called without having header wallpaper info.", exc_info=True)
+            logger.warning(
+                "check called without having header wallpaper info.", exc_info=True
+            )
             return False
 
-    def download(self):
-        """Download the wallpaper to a specified output directory.
+    @property
+    def size(self):
+        """Return image width and height from the stored file."""
+        if (self.cached):
+            if not self._size:
+                i = Image.open(self.output)
+                self._size = i.size
+                i.close()
+            return self._size
+        else:
+            return None
 
-        :returns: True if download succeded.
-        """
-        if self.thread.isAlive():  # we are still downloading the image
-            self.thread.join()
-        else:  # we need the image
-            self._store()
-        return True
+    @property
+    def ratio(self):
+        """Return the aspect ratio of the wallpaper (if cached)."""
+        if (self.size):
+            return round(float(self.size[0]) / self.size[1], 5)
 
     @property
     def extension(self):
@@ -146,7 +177,8 @@ class WebWallpaper(object):
         try:
             return ACCEPTED_CONTENT_TYPES.get(self.contentType, None)
         except AttributeError:
-            logger.warning("extension called without having header wallpaper info.", exc_info=True)
+            logger.warning(
+                "extension called without having header wallpaper info.", exc_info=True)
             return "jpg"  # Fallback to jpg
 
     @property
