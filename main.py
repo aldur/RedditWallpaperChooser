@@ -3,13 +3,13 @@
 
 import sys
 
-from RedditWallpaperChooser.chooser import RedditWallpaperChooser
+from RedditWallpaperChooser.chooser import RedditWallpaperChooser, get_wall
 from RedditWallpaperChooser.constants import USER, PASSWORD, CHECK_SIZE, CHECK_RATIO
 
 if __name__ == '__main__':
     rwc = RedditWallpaperChooser(USER, PASSWORD)
     w = rwc.choose_wall(CHECK_SIZE, CHECK_RATIO)
-    out = rwc.get_wall(w)
+    out = get_wall(w)
 
     if out:
         print(out)  # Print on stdout

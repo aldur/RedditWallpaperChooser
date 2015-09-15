@@ -19,7 +19,6 @@ CONSTANT_RATIO = round(float(RATIO[0]) / RATIO[1], 5)
 
 
 class WebWallpaper(object):
-
     """Wallpapers from the web."""
 
     def __init__(self, name, url):
@@ -33,11 +32,13 @@ class WebWallpaper(object):
         self.storage = OUTPUT_PATH
         self.thread = threading.Thread(target=self._store)
 
+        self.contentSize = None
+        self.contentType = None
+
         self._size = None
 
     def __eq__(self, other):
-        return (isinstance(other, self.__class__)
-                and self.url == other.url)
+        return isinstance(other, self.__class__) and self.url == other.url
 
     def __hash__(self):
         return hash(self.url)
@@ -45,7 +46,7 @@ class WebWallpaper(object):
     def __str__(self):
         s = "{} - {})".format(self.name, self.url)
 
-        if (self.size):
+        if self.size:
             s += " - {}x{} - {}".format(
                 self.size[0], self.size[1],
                 ":".join([str(r) for r in RATIO])
@@ -84,8 +85,8 @@ class WebWallpaper(object):
             logger.info("Wallpaper from %s successfully downloaded.", self.url)
 
     def read_header_info(self):
-        """If the item is cached, read the header informations directly from the cache.
-        :returns: True if read from cache succeded.
+        """If the item is cached, read the header information directly from the cache.
+        :returns: True if read from cache did succeed.
 
         """
         if self.cached:
@@ -104,7 +105,7 @@ class WebWallpaper(object):
 
     def _store_header_info(self):
         """Store header info on file system, through a json file.
-        :returns: True if storing succeded.
+        :returns: True if storing did succeed.
 
         """
         json_path = "{}.json".format(self.output)
@@ -120,7 +121,7 @@ class WebWallpaper(object):
 
         return True
 
-    def get_header_info(self, store=True):
+    def get_header_info(self):
         """Request url header to find the content types and sizes of the wallpaper."""
         self.thread.start()
         return self.thread
@@ -141,9 +142,9 @@ class WebWallpaper(object):
             size_fits = all([image_size[i] >= SIZE[i] for i in range(2)])
             aspect_ratio_fits = CONSTANT_RATIO == self.ratio
 
-            if (size and aspect_ratio):
+            if size and aspect_ratio:
                 return size_fits and aspect_ratio_fits
-            elif (size):
+            elif size:
                 return size_fits
             else:  # aspect_ratio_fits
                 return aspect_ratio_fits
@@ -156,7 +157,7 @@ class WebWallpaper(object):
     @property
     def size(self):
         """Return image width and height from the stored file."""
-        if (self.cached):
+        if self.cached:
             if not self._size:
                 i = Image.open(self.output)
                 self._size = i.size
@@ -168,7 +169,7 @@ class WebWallpaper(object):
     @property
     def ratio(self):
         """Return the aspect ratio of the wallpaper (if cached)."""
-        if (self.size):
+        if self.size:
             return round(float(self.size[0]) / self.size[1], 5)
 
     @property
@@ -197,6 +198,5 @@ class WebWallpaper(object):
 
 
 class ImgurWebWallpaper(WebWallpaper):
-
     """Wallpapers from the Imgur hosting."""
     pass

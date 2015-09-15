@@ -1,8 +1,2 @@
-__pycache__/
-*.pyc
-*.sublime-workspace
 .ropeproject/
-.noseids
-wallpapers/
 wallpaper*
-*.jpg

@@ -15,7 +15,7 @@ class RedditParser(object):
 
     def __init__(self, subreddits, user=None, password=None):
         """Init the list of wallpapers."""
-        user_agent = (REDDIT_USER_AGENT)
+        user_agent = REDDIT_USER_AGENT
 
         self.r = praw.Reddit(user_agent=user_agent)
 

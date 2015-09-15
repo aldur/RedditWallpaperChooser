@@ -9,7 +9,30 @@ import os.path
 
 from .logger import logger
 from .parser import RedditParser
-from .constants import LIMIT, SUBREDDITS, OUTPUT_WALL, STORE_EXTENSION
+from .constants import SUBREDDITS, OUTPUT_WALL, STORE_EXTENSION
+
+# TODO: LIMIT request number.
+
+
+def get_wall(wall):
+    """Download the wallpaper and store it on the local file system.
+
+    :wall: The wallpaper to be downloaded.
+    :returns: The realpath of the output file, on success.
+    """
+    if wall:
+        if STORE_EXTENSION:
+            output = "{}.{}".format(OUTPUT_WALL, wall.extension)
+        else:
+            output = OUTPUT_WALL
+        shutil.copyfile(wall.output, output)
+
+        logger.info(
+            "Wallpaper %s successfully downloaded to %s",
+            wall, output
+        )
+
+        return os.path.realpath(output)
 
 
 class RedditWallpaperChooser(object):
@@ -21,7 +44,7 @@ class RedditWallpaperChooser(object):
         self.already_chosen = set()
         self.r = RedditParser(SUBREDDITS, user, password)
 
-    def _find_walls(self, limit=LIMIT):
+    def _find_walls(self):
         """Parse subreddits and find the hottest wallpapers.
         :limit: The maximum limit of results for each subreddit.
         :returns: A set of WebWallpapers.
@@ -53,23 +76,3 @@ class RedditWallpaperChooser(object):
             logger.error("Something went wrong while fetching walls, sorry.")
 
         return None
-
-    def get_wall(self, wall):
-        """Download the wallpaper and store it on the local file system.
-
-        :wall: The wallpaper to be downloaded.
-        :returns: The realpath of the output file, on success.
-        """
-        if wall:
-            if STORE_EXTENSION:
-                output = "{}.{}".format(OUTPUT_WALL, wall.extension)
-            else:
-                output = OUTPUT_WALL
-            shutil.copyfile(wall.output, output)
-
-            logger.info(
-                "Wallpaper %s succesfully downloaded to %s",
-                wall, output
-            )
-
-            return os.path.realpath(output)
