@@ -4,13 +4,13 @@
 """Reddit parser."""
 
 import random
-import shutil
 import logging
-import os.path
 import threading
+import os.path
+import sys
 
-from .parser import RedditParser
-from .constants import SUBREDDITS, OUTPUT_WALL, STORE_EXTENSION
+import RedditWallpaperChooser.parser
+import RedditWallpaperChooser.config as config
 
 # TODO: LIMIT request number.
 
@@ -21,20 +21,28 @@ class Chooser(object):
 
     """Handle subreddit parsing and selected wallpaper choice."""
 
-    def __init__(self, user=None, password=None):
+    @staticmethod
+    def _create_output_directory():
         """
-        Init the subreddit list and the reddit parser.
+        Create the output directory, if needed.
         """
-        self.r = RedditParser(SUBREDDITS, user, password)
+        output_path = config.parser.get(
+            config.SECTION_WALLPAPER,
+            config.WALLPAPER_FOLDER
+        )
 
-    def _find_walls(self):
-        """
-        Ask the parser to find the most trending wallpapers.
+        exists = os.path.exists(output_path)
+        is_dir = os.path.isdir(output_path)
 
-        :returns: A set of WebWallpapers.
-        """
-        logger.info("Getting wallpapers from Reddit.")
-        return self.r.fetch()
+        if exists and not is_dir:
+            logger.error(
+                "The output path '%s' already exists and is not a directory. I can't continue.",
+                output_path
+            )
+            sys.exit(False)
+
+        if not exists:
+            os.mkdir(output_path)
 
     def choose_random_trending_wall(self):
         """
@@ -42,7 +50,11 @@ class Chooser(object):
 
         :returns: The chosen wallpaper or None if any error occurs.
         """
-        walls = self._find_walls()  # Download the wallpaper list from Reddit
+        type(self)._create_output_directory()
+
+        logger.info("Getting wallpapers from Reddit.")
+        r = RedditWallpaperChooser.parser.RedditParser()
+        walls = r.fetch()  # Download the wallpaper list from Reddit
 
         # Store the wallpapers on disk.
         threads = [
@@ -51,8 +63,10 @@ class Chooser(object):
         [t.start() for t in threads]
         [t.join() for t in threads]
 
+        filtered_walls = tuple(w for w in walls if w.check())
+
         try:
-            w = random.choice(tuple(walls))
+            w = random.choice(filtered_walls)
             return w
         except IndexError:  # Something went wrong while fetching walls
             logger.error("Something went wrong while fetching walls, sorry.")

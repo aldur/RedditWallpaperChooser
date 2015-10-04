@@ -5,17 +5,24 @@
 
 import os.path
 import json
-import zlib
 import logging
+import collections
+
+# noinspection PyUnresolvedReferences
+import zlib
 
 # noinspection PyPackageRequirements
 from PIL import Image
 
-from .constants import ACCEPTED_CONTENT_TYPES, OUTPUT_PATH, SIZE, RATIO
 import RedditWallpaperChooser.remote
+import RedditWallpaperChooser.constants
+import RedditWallpaperChooser.config as config
 
-CONSTANT_RATIO = round(float(RATIO[0]) / RATIO[1], 5)
 logger = logging.getLogger(__name__)
+
+Size = collections.namedtuple(
+    "Size", "width, height"
+)
 
 
 class WebWallpaper(object):
@@ -29,18 +36,64 @@ class WebWallpaper(object):
 
         :param content_type: An HTTP content type.
         """
-        if content_type not in ACCEPTED_CONTENT_TYPES:
+        content_types = RedditWallpaperChooser.constants.ACCEPTED_CONTENT_TYPES
+        if content_type not in content_types:
             logger.warning(
                 "Unknown content type %s. Falling back to JPG.",
                 content_type
             )
-        return ACCEPTED_CONTENT_TYPES.get(content_type, "jpg")
+        return content_types.get(content_type, "jpg")
+
+    @staticmethod
+    def size_from_config():
+        """
+        Parse the configuration for target image size.
+
+        :return: An image size.
+        """
+        size = config.parser.get(
+            config.SECTION_WALLPAPER,
+            config.WALLPAPER_SIZE
+        )
+
+        assert "x" in size, \
+            "Malformed image size."
+
+        size = size.split("x")
+        assert len(size) == 2, \
+            "Malformed image size."
+
+        return Size(int(size[0]), int(size[1]))
+
+    @staticmethod
+    def ratio_from_config():
+        """
+        Parse the configuration for target image ratio.
+
+        :return: The required image ration (as float).
+        """
+        ratio = config.parser.get(
+            config.SECTION_WALLPAPER,
+            config.WALLPAPER_ASPECT_RATIO,
+        )
+
+        assert ":" in ratio, \
+            "Malformed image ratio."
+
+        ratio = ratio.split(":")
+        assert len(ratio) == 2, \
+            "Malformed image ratio."
+
+        return round(float(ratio[0]) / float(ratio[1]), 5)
 
     def __init__(self, name, url):
         self.name = name
         self.url = url
 
-        self.storage_directory = OUTPUT_PATH
+        self.storage_directory = config.parser.get(
+            config.SECTION_WALLPAPER,
+            config.WALLPAPER_FOLDER
+        )
 
         self.contentSize = None
         self.contentType = None
@@ -55,10 +108,8 @@ class WebWallpaper(object):
         s = "{} - {})".format(self.name, self.url)
 
         if self.image_size:
-            s += " - {}x{} - {}".format(
-                self.image_size[0], self.image_size[1],
-                ":".join([str(r) for r in RATIO])
-                if self.ratio == CONSTANT_RATIO else self.ratio
+            s += " - {}x{}".format(
+                *self.image_size
             )
 
         return s
@@ -108,33 +159,27 @@ class WebWallpaper(object):
                 json_file
             )
 
-    # TODO: fix target_size and target_aspect_ratio
-    def check(
-            self, target_size=False, target_aspect_ration=False
-    ):
+    def check(self):
         """
-        Check whether the wallpaper should be stored/used.
+        Check whether the wallpaper should be returned ready to be used.
 
-        :param target_size: Minimum required image size.
-        :param target_aspect_ration: Required aspect ratio.
         :returns: A boolean.
         """
-        if self.contentType is None:
-            logger.warning(
-                "The content type field should be populated before calling check."
-            )
-            return
-
-        accepted_content_type = self.contentType in ACCEPTED_CONTENT_TYPES
-        if not accepted_content_type:
+        if not self.is_stored:
             return False
-        if not target_size and not target_aspect_ration:
-            return accepted_content_type
 
-        size_fits = all([self.image_size[i] >= SIZE[i] for i in range(2)])
-        aspect_ratio_fits = CONSTANT_RATIO == self.ratio
+        target_size = type(self).size_from_config()
+        target_ratio = type(self).ratio_from_config()
+        if not target_size and not target_ratio:
+            return True
 
-        if target_size and target_aspect_ration:
+        size_fits = all((
+            self.image_size.height >= target_size.height,
+            self.image_size.width >= target_size.width,
+        ))
+        aspect_ratio_fits = target_ratio == self.ratio
+
+        if target_size and target_ratio:
             return size_fits and aspect_ratio_fits
         elif target_size:
             return size_fits
@@ -152,10 +197,10 @@ class WebWallpaper(object):
             )
 
         i = Image.open(self.output_path)
-        _size = i.image_size()
+        _size = i.size
         i.close()
 
-        return _size
+        return Size(*_size)
 
     @property
     def ratio(self):
@@ -163,7 +208,7 @@ class WebWallpaper(object):
         Return the aspect ratio of the wallpaper (if cached).
         """
         if self.image_size:
-            return round(float(self.image_size[0]) / self.image_size[1], 5)
+            return round(float(self.image_size.width) / self.image_size.height, 5)
 
     @property
     def _common_path_prefix(self):
@@ -191,7 +236,7 @@ class WebWallpaper(object):
 
         return "{}.{}".format(
             self._common_path_prefix,
-            WebWallpaper.extension_from_content_type(self.contentType)
+            type(self).extension_from_content_type(self.contentType)
         )
 
     @property

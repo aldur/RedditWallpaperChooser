@@ -9,8 +9,9 @@ import praw
 import threading
 import logging
 
-from .wallpaper import WebWallpaper
-from .constants import REDDIT_USER_AGENT, LIMIT
+import RedditWallpaperChooser.wallpaper
+import RedditWallpaperChooser.constants
+import RedditWallpaperChooser.config as config
 
 logger = logging.getLogger(__name__)
 
@@ -19,17 +20,24 @@ class RedditParser(object):
 
     """Parse subreddits and store a list of wallpapers."""
 
-    def __init__(
-            self, subreddits,
-            user=None, password=None
-    ):
-        self.r = praw.Reddit(user_agent=REDDIT_USER_AGENT)
+    def __init__(self):
+        self.r = praw.Reddit(
+            user_agent=RedditWallpaperChooser.constants.REDDIT_USER_AGENT
+        )
 
-        if user and password:
-            self.r.login(user=user, password=password)
+        username = config.parser.get(config.SECTION_REDDIT, config.REDDIT_USERNAME)
+        password = config.parser.get(config.SECTION_REDDIT, config.REDDIT_PASSWORD)
+
+        if username and password:
+            self.r.login(user=username, password=password)
+
+        subreddits = config.parser.get(
+            config.SECTION_REDDIT, config.REDDIT_SUBREDDITS
+        ).split(",")
+        subreddits = [subreddit.strip() for subreddit in subreddits]
+        self.subreddits = subreddits
 
         self.walls = set()
-        self.subreddits = subreddits
         self.semaphore = threading.Semaphore()
 
     def _fetch_walls(self, subreddit):
@@ -39,10 +47,17 @@ class RedditParser(object):
         :subreddit: Subreddit to be parsed.
         """
         logger.info("Fetching wallpapers from 'r/%s'.", subreddit)
-        r_walls = self.r.get_subreddit(subreddit).get_hot(limit=LIMIT)
+        r_walls = self.r.get_subreddit(subreddit).get_hot(
+            limit=config.parser.getint(
+                config.SECTION_REDDIT, config.REDDIT_RESULT_LIMIT
+            )
+        )
 
+        # TODO: context manager?
         self.semaphore.acquire()
-        self.walls |= {WebWallpaper(str(w), w.url) for w in r_walls if not w.is_self}
+        self.walls |= {
+            RedditWallpaperChooser.wallpaper.WebWallpaper(str(w), w.url) for w in r_walls if not w.is_self
+        }
         self.semaphore.release()
 
         logger.debug("Fetching from 'r/%s' completed.", subreddit)

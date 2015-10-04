@@ -5,11 +5,19 @@
 RedditWallpaperChooser main file.
 """
 
-import sys
 import logging
+import argparse
+import json
 
 import RedditWallpaperChooser.chooser
-from RedditWallpaperChooser.constants import USER, PASSWORD, CHECK_SIZE, CHECK_RATIO
+import RedditWallpaperChooser.config
+
+
+_config_file_path = "config"
+_default_config_file_path = "default_config"
+_log_level = "log_level"
+
+logger = logging.getLogger(__name__)
 
 
 def _setup_logging(log_level):
@@ -20,8 +28,8 @@ def _setup_logging(log_level):
     """
     assert log_level, "I need a logging level."
 
-    logger = logging.getLogger(RedditWallpaperChooser.__name__)
-    logger.setLevel(log_level)
+    module_logger = logging.getLogger(RedditWallpaperChooser.__name__)
+    module_logger.setLevel(log_level)
 
     console_handler = logging.StreamHandler()
     console_handler.setLevel(logging.DEBUG)
@@ -50,24 +58,98 @@ def _setup_logging(log_level):
     finally:
         console_handler.setFormatter(formatter)
 
-    logger.addHandler(console_handler)
+    module_logger.addHandler(console_handler)
+
+
+def _cmd_line_parser():
+    """
+    Parse the command line configuration.
+
+    :return: A new command line configuration parser.
+    """
+    def _to_add_argument(s):
+        return "-{}".format(s[0]), "--{}".format(s),
+
+    parser = argparse.ArgumentParser(
+        description='Ripple analyzer.'
+    )
+
+    parser.add_argument(
+        *_to_add_argument(_config_file_path),
+        metavar="<configuration file path>",
+        type=str,
+        required=False,
+        help='path to a .ini configuration file'
+    )
+
+    parser.add_argument(
+        *_to_add_argument(_default_config_file_path),
+        metavar="<default configuration file path>",
+        type=str,
+        required=False,
+        help='store default configuration to this .ini file and exit'
+    )
+
+    parser.add_argument(
+        *_to_add_argument(_log_level),
+        choices=['CRITICAL',
+                 'ERROR',
+                 'WARNING',
+                 'INFO',
+                 'DEBUG',
+                 'NOTSET',
+                 'NONE'],
+        default='DEBUG',  # TODO: change me
+        help="set logging level"
+    )
+
+    return parser
 
 
 def main():
     """
     Main, what else?
     """
-    _setup_logging(logging.DEBUG)
+    # Handle CLI arguments
+    cli_parser = _cmd_line_parser()
+    cli_args = vars(cli_parser.parse_args())
 
-    rwc = RedditWallpaperChooser.chooser.Chooser(USER, PASSWORD)
+    log_mapping = {
+        'CRITICAL': logging.CRITICAL,
+        'ERROR': logging.ERROR,
+        'WARNING': logging.WARNING,
+        'INFO': logging.INFO,
+        'DEBUG': logging.DEBUG,
+        'NOTSET': logging.NOTSET,
+        'NONE': None,
+    }
+
+    # Configure logging
+    log_level = log_mapping[cli_args[_log_level]]
+    _setup_logging(log_level)
+
+    default_config_path = cli_args.get(_default_config_file_path, None)
+    if default_config_path is not None:
+        RedditWallpaperChooser.config.write_default_config(default_config_path)
+        return 0
+
+    # Parse .ini configuration
+    config_path = cli_args.get(_config_file_path)
+    RedditWallpaperChooser.config.parse_config(config_path)
+
+    logger.debug(
+        "Dumping loaded configuration:\n%s",
+        json.dumps(
+            RedditWallpaperChooser.config.as_dictionary(),
+            indent=2,
+        )
+    )
+
+    rwc = RedditWallpaperChooser.chooser.Chooser()
     w = rwc.choose_random_trending_wall()
 
     if w:
         print(w.absolute_output_path)  # Print on stdout
-        sys.exit(0)
+        return 0
     else:
-        sys.exit(1)
-
-
-if __name__ == '__main__':
-    main()
+        return 1

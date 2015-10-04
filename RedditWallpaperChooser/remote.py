@@ -9,6 +9,8 @@ import shutil
 import requests
 import logging
 
+import RedditWallpaperChooser.constants
+
 __author__ = 'aldur'
 logger = logging.getLogger(__name__)
 
@@ -26,9 +28,10 @@ def store(wallpaper):
     wallpaper.contentType = r.headers.get('content-type', None)
     wallpaper.contentSize = r.headers.get('content-size', None)
 
-    # Abort the download it if it doesn't pass the check.
-    if not wallpaper.check():
+    accepted_contents_type = RedditWallpaperChooser.constants.ACCEPTED_CONTENT_TYPES
+    if wallpaper.contentType not in accepted_contents_type:
         r.close()
+        logger.debug("Skipping not supported content-type: %s.", wallpaper.contentType)
         return
 
     if r.status_code == requests.codes.ok:
@@ -43,3 +46,5 @@ def store(wallpaper):
             wallpaper.url,
             r.status_code
         )
+
+    r.close()
