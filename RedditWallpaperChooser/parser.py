@@ -3,10 +3,12 @@
 
 import praw
 import threading
+import logging
 
 from .wallpaper import WebWallpaper
-from .logger import logger
 from .constants import REDDIT_USER_AGENT, LIMIT
+
+logger = logging.getLogger(__name__)
 
 
 class RedditParser(object):

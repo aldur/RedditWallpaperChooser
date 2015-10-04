@@ -9,13 +9,14 @@ import shutil
 import threading
 import json
 import zlib
+import logging
 
 from PIL import Image
 
 from .constants import ACCEPTED_CONTENT_TYPES, OUTPUT_PATH, SIZE, RATIO
-from .logger import logger
 
 CONSTANT_RATIO = round(float(RATIO[0]) / RATIO[1], 5)
+logger = logging.getLogger(__name__)
 
 
 class WebWallpaper(object):

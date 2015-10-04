@@ -5,13 +5,15 @@
 
 import random
 import shutil
+import logging
 import os.path
 
-from .logger import logger
 from .parser import RedditParser
 from .constants import SUBREDDITS, OUTPUT_WALL, STORE_EXTENSION
 
 # TODO: LIMIT request number.
+
+logger = logging.getLogger(__name__)
 
 
 def get_wall(wall):
