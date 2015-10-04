@@ -1,10 +1,14 @@
 #!/usr/bin/env python
 # encoding: utf-8
 
+"""
+RedditWallpaperChooser main file.
+"""
+
 import sys
 import logging
 
-from RedditWallpaperChooser.chooser import RedditWallpaperChooser, get_wall
+import RedditWallpaperChooser.chooser
 from RedditWallpaperChooser.constants import USER, PASSWORD, CHECK_SIZE, CHECK_RATIO
 
 
@@ -50,14 +54,16 @@ def _setup_logging(log_level):
 
 
 def main():
+    """
+    Main, what else?
+    """
     _setup_logging(logging.DEBUG)
 
-    rwc = RedditWallpaperChooser(USER, PASSWORD)
-    w = rwc.choose_wall(CHECK_SIZE, CHECK_RATIO)
-    output_path = get_wall(w)
+    rwc = RedditWallpaperChooser.chooser.Chooser(USER, PASSWORD)
+    w = rwc.choose_random_trending_wall()
 
-    if output_path:
-        print(output_path)  # Print on stdout
+    if w:
+        print(w.absolute_output_path)  # Print on stdout
         sys.exit(0)
     else:
         sys.exit(1)

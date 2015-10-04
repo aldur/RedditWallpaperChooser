@@ -1,6 +1,10 @@
 #!/usr/bin/env python
 # encoding: utf-8
 
+"""
+Parse subreddits searching for wallpapers.
+"""
+
 import praw
 import threading
 import logging
@@ -15,11 +19,11 @@ class RedditParser(object):
 
     """Parse subreddits and store a list of wallpapers."""
 
-    def __init__(self, subreddits, user=None, password=None):
-        """Init the list of wallpapers."""
-        user_agent = REDDIT_USER_AGENT
-
-        self.r = praw.Reddit(user_agent=user_agent)
+    def __init__(
+            self, subreddits,
+            user=None, password=None
+    ):
+        self.r = praw.Reddit(user_agent=REDDIT_USER_AGENT)
 
         if user and password:
             self.r.login(user=user, password=password)
@@ -29,7 +33,8 @@ class RedditParser(object):
         self.semaphore = threading.Semaphore()
 
     def _fetch_walls(self, subreddit):
-        """Fetch walls from subreddit and store them in the walls set.
+        """
+        Fetch trending walls from selected subreddit.
 
         :subreddit: Subreddit to be parsed.
         """
@@ -43,7 +48,9 @@ class RedditParser(object):
         logger.debug("Fetching from 'r/%s' completed.", subreddit)
 
     def fetch(self):
-        """Fetch walls from all subreddits and return them."""
+        """
+        Globally fetch trending walls from each subreddit.
+        """
         threads = [
             threading.Thread(target=self._fetch_walls, args=(subreddit,))
             for subreddit
@@ -52,6 +59,6 @@ class RedditParser(object):
 
         [t.start() for t in threads]
         [t.join() for t in threads]
-        logger.info("Done fetching from subreddits.")
+        logger.info("Fetching from subreddits: done.")
 
         return self.walls

@@ -7,6 +7,7 @@ import random
 import shutil
 import logging
 import os.path
+import threading
 
 from .parser import RedditParser
 from .constants import SUBREDDITS, OUTPUT_WALL, STORE_EXTENSION
@@ -16,65 +17,43 @@ from .constants import SUBREDDITS, OUTPUT_WALL, STORE_EXTENSION
 logger = logging.getLogger(__name__)
 
 
-def get_wall(wall):
-    """Download the wallpaper and store it on the local file system.
-
-    :wall: The wallpaper to be downloaded.
-    :returns: The realpath of the output file, on success.
-    """
-    if wall:
-        if STORE_EXTENSION:
-            output = "{}.{}".format(OUTPUT_WALL, wall.extension)
-        else:
-            output = OUTPUT_WALL
-        shutil.copyfile(wall.output, output)
-
-        logger.info(
-            "Wallpaper %s successfully downloaded to %s",
-            wall, output
-        )
-
-        return os.path.realpath(output)
-
-
-class RedditWallpaperChooser(object):
+class Chooser(object):
 
     """Handle subreddit parsing and selected wallpaper choice."""
 
     def __init__(self, user=None, password=None):
-        """Init the subreddit list and the reddit parser."""
-        self.already_chosen = set()
+        """
+        Init the subreddit list and the reddit parser.
+        """
         self.r = RedditParser(SUBREDDITS, user, password)
 
     def _find_walls(self):
-        """Parse subreddits and find the hottest wallpapers.
-        :limit: The maximum limit of results for each subreddit.
-        :returns: A set of WebWallpapers.
-
         """
-        logger.info("Getting walls from Reddit.")
+        Ask the parser to find the most trending wallpapers.
+
+        :returns: A set of WebWallpapers.
+        """
+        logger.info("Getting wallpapers from Reddit.")
         return self.r.fetch()
 
-    def choose_wall(self, size=False, aspect_ratio=False):
-        """Find edible wallpapers and return a new one.
+    def choose_random_trending_wall(self):
+        """
+        Find edible wallpapers and return a new one.
 
-        :size: If set to True, check for specific wallpaper size.
-        :aspect_ratio: If set to True, check for specific aspect ratio.
         :returns: The chosen wallpaper or None if any error occurs.
         """
         walls = self._find_walls()  # Download the wallpaper list from Reddit
 
-        # Store the wallpapers / check the cache
-        threads = [w.get_header_info() for w in walls]
+        # Store the wallpapers on disk.
+        threads = [
+            threading.Thread(target=w.store) for w in walls
+        ]
+        [t.start() for t in threads]
         [t.join() for t in threads]
-
-        # Select edible wallpapers
-        walls = {w for w in walls if w.check(size, aspect_ratio)}
 
         try:
             w = random.choice(tuple(walls))
             return w
         except IndexError:  # Something went wrong while fetching walls
             logger.error("Something went wrong while fetching walls, sorry.")
-
-        return None
+            return None

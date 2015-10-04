@@ -32,6 +32,7 @@ SUBREDDITS = [
 # Accepted content types and relative extension.
 ACCEPTED_CONTENT_TYPES = {
     "image/jpeg": "jpg",
+    "image/png": "png",
 }
 
 # Limit of walls to parse from each subreddit.
