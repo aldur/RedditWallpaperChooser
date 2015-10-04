@@ -53,12 +53,12 @@ class RedditParser(object):
             )
         )
 
-        # TODO: context manager?
-        self.semaphore.acquire()
-        self.walls |= {
-            RedditWallpaperChooser.wallpaper.WebWallpaper(str(w), w.url) for w in r_walls if not w.is_self
-        }
-        self.semaphore.release()
+        with self.semaphore:
+            self.walls |= {
+                RedditWallpaperChooser.wallpaper.WebWallpaper(str(w), w.url)
+                for w in r_walls
+                if not w.is_self
+            }
 
         logger.debug("Fetching from 'r/%s' completed.", subreddit)
 
