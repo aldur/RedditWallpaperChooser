@@ -49,7 +49,7 @@ def _setup_logging(log_level):
     logger.addHandler(console_handler)
 
 
-if __name__ == '__main__':
+def main():
     _setup_logging(logging.DEBUG)
 
     rwc = RedditWallpaperChooser(USER, PASSWORD)
@@ -61,3 +61,7 @@ if __name__ == '__main__':
         sys.exit(0)
     else:
         sys.exit(1)
+
+
+if __name__ == '__main__':
+    main()
