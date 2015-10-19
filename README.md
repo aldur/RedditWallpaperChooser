@@ -59,7 +59,7 @@ Default configuration can be dumped with:
 $ ./bin/RedditWallpaperChooser -d config.ini
 ```
 
-You can the use your configuration with:
+You can then use your configuration with:
 
 ```bash
 $ ./bin/RedditWallpaperChooser -c config.ini
