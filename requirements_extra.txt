@@ -1,1 +1,1 @@
-colorlog==2.6.0
+colorlog==2.7.0
