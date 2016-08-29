@@ -8,14 +8,11 @@ __Caution:__ RedditWallpaperChooser is still a work in progress.
 
 * Choose the subreddits you like.
 * Filter by aspect ratio and image size.
-* Python 2 and Python 3 compatibility.
 
 ## Requirements
 
-We support the following Python versions:
-
-* Python 2.7 or greater.
-* Python 3.4 or greater.
+We make use of Python's 3 asynchronous APIs and `async`/`await` syntax.
+For this reason, we only support Python versions ≥ 3.5.
 
 Additional requirements are listed in the `requirements.txt` file.
 
@@ -54,7 +51,6 @@ In it, you can specify the following general options:
 - the subreddits to parse (`subreddits`)
 - the number of results per subreddit (`result_limit`)
 - the output directory (`output_folder`)
-- a regex filter to apply to the wallpaper names (`re_filter`)
 
 Additionally, you can also filter the candidate wallpapers to be selected and returned at the end of the download process:
 
@@ -76,9 +72,6 @@ $ RedditWallpaperChooser -c config.ini
 
 ## Future improvements
 
-- Add specific parsers for popular image hosting sites such as:
-    * https://imgur.com/
-    * https://www.flickr.com/
-- Filter and chooser wallpapers by color.
+- Filter wallpapers by color.
 - Avoid choosing again the same images.
 - Add a proper test suite.
