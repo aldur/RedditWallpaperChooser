@@ -1,0 +1,126 @@
+#!/usr/bin/env python
+# encoding: utf-8
+
+"""
+Parse subreddits searching for wallpapers.
+"""
+
+import asyncio
+import json
+import logging
+import os.path
+import random
+
+import RedditWallpaperChooser.config as config
+import RedditWallpaperChooser.constants
+import RedditWallpaperChooser.reddit
+import RedditWallpaperChooser.wallpaper
+import aiohttp
+
+logger = logging.getLogger(__name__)
+
+
+class Manager(object):
+
+    """Parse each subreddit and store the wallpapers they link to."""
+
+    def __init__(self, output_path):
+        assert output_path
+        self.output_path = output_path
+
+        self.subreddits = [subreddit.strip() for subreddit in config.parser.get(
+            config.SECTION_REDDIT, config.REDDIT_SUBREDDITS
+        ).split(",")]
+        assert self.subreddits
+
+        self.walls = set()
+
+    async def fetch_from_subreddit(self, session, subreddit):
+        """
+        Fetch trending walls from selected subreddit.
+
+        :param session: An aiohttp session.
+        :param subreddit: Subreddit to be parsed.
+        """
+        logger.info("Fetching wallpapers from 'r/%s'.", subreddit)
+
+        # TODO: pagination!
+
+        url = "https://www.reddit.com/r/{}/top/.json".format(subreddit)
+        params = {
+            'limit': config.parser.getint(config.SECTION_REDDIT, config.REDDIT_RESULT_LIMIT)
+        }
+
+        async with session.get(url, params=params) as response:
+            assert response.status == 200  # TODO: error handling
+            data = await response.json()
+
+        self.walls |= {
+            w for w in RedditWallpaperChooser.reddit.parse_listing(data)
+            if w.fits(config.get_size(), config.get_ratio())
+        }
+        logger.debug("Fetching from 'r/%s' completed.", subreddit)
+
+    def fetch(self):
+        """
+        Globally fetch trending walls from each subreddit.
+        """
+        # TODO: limit concurrent number of requests to Reddit.
+        with aiohttp.ClientSession(
+            headers={"User-Agent": RedditWallpaperChooser.constants.REDDIT_USER_AGENT},
+        ) as session:
+            tasks = [
+                asyncio.ensure_future(self.fetch_from_subreddit(session, subreddit))
+                for subreddit in self.subreddits
+            ]
+            asyncio.get_event_loop().run_until_complete(asyncio.gather(*tasks))
+
+            return self.walls
+
+    async def store_wallpaper(self, session, wallpaper):
+        """
+        Store the wallpaper and its information.
+
+        :param session: An aiohttp session.
+        :param wallpaper: The wallpaper to be stored.
+        """
+        info_path = os.path.join(self.output_path, wallpaper.info_path)
+
+        if os.path.exists(info_path):
+            logger.debug("Cache hit for wallpaper: '%s'.", wallpaper.url)
+            wallpaper.image_type = json.load(open(info_path, 'r'))['image_type']
+            return
+
+        async with session.get(wallpaper.url) as response:
+            assert response.status == 200  # TODO: error handling
+            wallpaper.set_image_type(response.headers["content-type"])
+
+            with open(info_path, "w") as info_file:
+                json.dump(wallpaper.info, info_file, indent=2)
+
+            data = await response.read()
+
+            wallpaper_path = os.path.join(self.output_path, wallpaper.output_path)
+            with open(wallpaper_path, 'wb') as f:
+                f.write(data)
+
+            logger.debug("Wallpaper from '%s' successfully downloaded.", wallpaper.url)
+
+    def store(self):
+        """
+        Store the previously fetched wallpapers.
+        """
+        logger.info("Storing wallpapers...")
+        with aiohttp.ClientSession() as session:
+            tasks = [
+                asyncio.ensure_future(self.store_wallpaper(session, wallpaper))
+                for wallpaper in self.walls
+            ]
+            asyncio.get_event_loop().run_until_complete(asyncio.gather(*tasks))
+
+    def choose(self):
+        """
+        Choose one of the stored wallpapers and return its absolute path.
+        """
+        return os.path.abspath(
+            os.path.join(self.output_path, random.choice(tuple(self.walls)).output_path))

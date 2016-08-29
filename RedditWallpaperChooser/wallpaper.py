@@ -3,20 +3,11 @@
 
 """Wallpaper classes."""
 
-import os.path
-import json
 import logging
-
-# noinspection PyUnresolvedReferences
 import zlib
 
-# noinspection PyPackageRequirements
-from PIL import Image
-
-import RedditWallpaperChooser.remote
 import RedditWallpaperChooser.constants
 import RedditWallpaperChooser.utils
-import RedditWallpaperChooser.config as config
 
 logger = logging.getLogger(__name__)
 
@@ -25,32 +16,19 @@ class WebWallpaper(object):
 
     """A wallpaper from the web."""
 
-    @staticmethod
-    def extension_from_content_type(content_type):
-        """
-        Return the file extension by using the HTTP content-type header.
-
-        :param content_type: An HTTP content type.
-        """
-        content_types = RedditWallpaperChooser.constants.ACCEPTED_CONTENT_TYPES
-        if content_type not in content_types:
-            logger.warning(
-                "Unknown content type %s. Falling back to JPG.",
-                content_type
-            )
-        return content_types.get(content_type, "jpg")
-
-    def __init__(self, name, url):
-        self.name = name
+    def __init__(self, title, url, size, subreddit):
+        self.title = title
         self.url = url
+        self.size = size
+        self.subreddit = subreddit
 
-        self.storage_directory = config.parser.get(
-            config.SECTION_WALLPAPER,
-            config.WALLPAPER_FOLDER
-        )
+        # Produce a deterministic identifier starting form the url.
+        self.id = str(zlib.adler32(self.url.encode()))
 
-        self.contentSize = None
-        self.contentType = None
+        # Store the image ratio
+        self.ratio = round(float(self.size.width) / self.size.height, 5)
+
+        self.image_type = None
 
     def __eq__(self, other):
         return isinstance(other, self.__class__) and self.url == other.url
@@ -59,71 +37,31 @@ class WebWallpaper(object):
         return hash(self.url)
 
     def __str__(self):
-        s = "{} - {})".format(self.name, self.url)
+        return self.__repr__()
 
-        if self.image_size:
-            s += " - {}x{}".format(
-                *self.image_size
+    def __repr__(self):
+        return "{} - {} - [{}x{}]".format(self.title, self.url, *self.size)
+
+    def set_image_type(self, content_type):
+        """
+        Set the image type, based on the HTTP content type.
+        """
+        content_types = RedditWallpaperChooser.constants.ACCEPTED_CONTENT_TYPES
+        if content_type not in content_types:
+            logger.warning(
+                "Unknown content type %s. Falling back to JPG.",
+                content_type
             )
 
-        return s
+        self.image_type = content_types.get(content_type, "jpg")
 
-    def store(self):
+    def fits(self, target_size, target_ratio):
         """
-        At the end of this call,
-        the wallpaper and its header info will be stored on disk.
+        :param target_size: A target size (can be None).
+        :param target_ratio: A target ratio (can be None).
+
+        :return: True if the wallpaper is bigger than the provided size and respects the ratio requirements.
         """
-        if self.parse_header_info():
-            # The wallpaper was already stored, as well as its info.
-            logger.debug("Cache hit for wallpaper: '%s'.", self.url)
-            return
-
-        RedditWallpaperChooser.remote.store(self)
-
-        logger.info("Wallpaper from '%s' successfully downloaded.", self.url)
-
-    def parse_header_info(self):
-        """
-        If the wallpaper has already been stored,
-        read its header information directly from the cache.
-
-        :returns: True if read from cache did succeed.
-        """
-        if not self.is_stored:
-            return False
-
-        with open(self.header_path, "r") as json_file:
-            j = json.load(json_file)
-
-            self.contentSize = j["contentSize"]
-            self.contentType = j["contentType"]
-
-            return True
-
-    def store_header_info(self):
-        """
-        Store header info on file system, through a json file.
-        """
-        with open(self.header_path, "w") as json_file:
-            json.dump(
-                {
-                    "contentType": self.contentType,
-                    "contentSize": self.contentSize,
-                },
-                json_file
-            )
-
-    def check(self):
-        """
-        Check whether the wallpaper should be returned ready to be used.
-
-        :returns: A boolean.
-        """
-        if not self.is_stored:
-            return False
-
-        target_size = config.get_size()
-        target_ratio = config.get_ratio()
         if not target_size and not target_ratio:
             return True
 
@@ -132,8 +70,8 @@ class WebWallpaper(object):
 
         if target_size:
             size_fits = all((
-                self.image_size.height >= target_size.height,
-                self.image_size.width >= target_size.width,
+                self.size.height >= target_size.height,
+                self.size.width >= target_size.width,
             ))
 
         if target_ratio:
@@ -147,71 +85,34 @@ class WebWallpaper(object):
             return aspect_ratio_fits
 
     @property
-    def image_size(self):
+    def info(self):
         """
-        Return the image width and height (from the stored file).
+        Info for this wallpaper.
         """
-        if not self.is_stored:
-            logger.warning(
-                "Can't get size of not-stored wallpaper."
-            )
-
-        i = Image.open(self.output_path)
-        _size = i.size
-        i.close()
-
-        return RedditWallpaperChooser.utils.Size(*_size)
+        return {
+            "title": self.title,
+            "url": self.url,
+            "width": self.size.width,
+            "height": self.size.height,
+            "image_type": self.image_type,
+            "subreddit": self.subreddit,
+        }
 
     @property
-    def ratio(self):
+    def info_path(self):
         """
-        Return the aspect ratio of the wallpaper (if cached).
+        The path of the wallpaper's info on disk.
         """
-        if self.image_size:
-            return round(float(self.image_size.width) / self.image_size.height, 5)
-
-    @property
-    def _common_path_prefix(self):
-        # Generate a deterministic hash from the url
-        hash_string = str(zlib.adler32(self.url.encode()))
-        return os.path.join(
-            self.storage_directory,
-            hash_string,
-        )
-
-    @property
-    def header_path(self):
-        """
-        The path of the wallpaper's header on disk.
-        """
-        return "{}.json".format(self._common_path_prefix)
+        return "{}.json".format(self.id)
 
     @property
     def output_path(self):
         """
         The output path of the stored wallpaper on disk.
         """
-        assert self.contentType is not None, \
-            "I need the content type to generate the output path."
-
-        return "{}.{}".format(
-            self._common_path_prefix,
-            type(self).extension_from_content_type(self.contentType)
-        )
-
-    @property
-    def absolute_output_path(self):
-        """
-        Return the absolute output path.
-        """
-        return os.path.realpath(self.output_path)
-
-    @property
-    def is_stored(self):
-        """
-        Return True if wall is stored on disk.
-        """
-        return os.path.exists(self.header_path)
+        assert self.image_type is not None, \
+            "I need the image type to generate the output path."
+        return "{}.{}".format(self.id, self.image_type)
 
 
 class ImgurWebWallpaper(WebWallpaper):

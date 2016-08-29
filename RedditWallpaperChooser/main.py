@@ -5,13 +5,14 @@
 RedditWallpaperChooser main file.
 """
 
-import logging
 import argparse
 import json
+import logging
+import os
+import sys
 
-import RedditWallpaperChooser.chooser
 import RedditWallpaperChooser.config
-
+import RedditWallpaperChooser.manager
 
 _config_file_path = "config"
 _default_config_file_path = "default_config"
@@ -44,11 +45,11 @@ def _setup_logging(log_level):
             reset=True,
             log_colors={
                 'DEBUG': 'blue',
-                'INFO'	: 'green',
-                'WARNING'	: 'yellow',
-                'ERROR'		: 'red',
-                'CRITICAL'	: 'red',
-                'EXCEPTION'	: 'red',
+                'INFO': 'green',
+                'WARNING': 'yellow',
+                'ERROR': 'red',
+                'CRITICAL': 'red',
+                'EXCEPTION': 'red',
             }
         )
     except ImportError:
@@ -67,6 +68,7 @@ def _cmd_line_parser():
 
     :return: A new command line configuration parser.
     """
+
     def _to_add_argument(s):
         return "-{}".format(s[0]), "--{}".format(s),
 
@@ -106,6 +108,31 @@ def _cmd_line_parser():
     return parser
 
 
+def _create_output_directory():
+    """
+    Create the output directory, if needed.
+    """
+    output_path = RedditWallpaperChooser.config.parser.get(
+        RedditWallpaperChooser.config.SECTION_WALLPAPER,
+        RedditWallpaperChooser.config.WALLPAPER_FOLDER
+    )
+
+    exists = os.path.exists(output_path)
+    is_dir = os.path.isdir(output_path)
+
+    if exists and not is_dir:
+        logger.error(
+            "The output path '%s' already exists and is not a directory. I can't continue.",
+            output_path
+        )
+        sys.exit(False)
+
+    if not exists:
+        os.mkdir(output_path)
+
+    return output_path
+
+
 def main():
     """
     Main, what else?
@@ -136,6 +163,7 @@ def main():
     # Parse .ini configuration
     config_path = cli_args.get(_config_file_path)
     RedditWallpaperChooser.config.parse_config(config_path)
+    output_path = _create_output_directory()
 
     logger.debug(
         "Dumping loaded configuration:\n%s",
@@ -145,11 +173,7 @@ def main():
         )
     )
 
-    rwc = RedditWallpaperChooser.chooser.Chooser()
-    w = rwc.choose_random_trending_wall()
-
-    if w:
-        print(w.absolute_output_path)  # Print on stdout
-        return 0
-    else:
-        return 1
+    manager = RedditWallpaperChooser.manager.Manager(output_path)
+    manager.fetch()
+    manager.store()
+    print(manager.choose())

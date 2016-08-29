@@ -7,7 +7,6 @@ Configuration logic.
 
 import configparser
 import logging
-import re
 
 import RedditWallpaperChooser.utils
 
@@ -19,7 +18,6 @@ logger = logging.getLogger(__name__)
 SECTION_REDDIT = "reddit"
 REDDIT_SUBREDDITS = "subreddits"
 REDDIT_RESULT_LIMIT = "result_limit"
-REDDIT_RE_FILTER = "re_filter"
 
 SECTION_WALLPAPER = "wallpaper"
 WALLPAPER_SIZE = "size"
@@ -29,8 +27,7 @@ WALLPAPER_FOLDER = "output_folder"
 _default_config = {
     SECTION_REDDIT: {
         REDDIT_SUBREDDITS: "spaceporn, skyporn, earthporn, wallpapers, wallpaper",
-        REDDIT_RESULT_LIMIT: "10",
-        REDDIT_RE_FILTER: "",
+        REDDIT_RESULT_LIMIT: "100",
     },
 
     SECTION_WALLPAPER: {
@@ -127,15 +124,3 @@ def get_ratio():
     assert len(ratio) == 2, "Malformed image ratio."
 
     return round(float(ratio[0]) / float(ratio[1]), 5)
-
-
-def get_re_filter():
-    """
-    Parse the configuration for the submission title filter.
-
-    :return: The compiled regex.
-    """
-    re_filter = parser.get(SECTION_REDDIT, REDDIT_RE_FILTER, raw=True)
-    if re_filter:
-        return re.compile(re_filter)
-    return None

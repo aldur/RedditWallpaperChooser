@@ -1,3 +1,1 @@
-Pillow==3.3.1
-praw==4.0.0b16
-requests==2.11.1
+aiohttp==0.22.5
