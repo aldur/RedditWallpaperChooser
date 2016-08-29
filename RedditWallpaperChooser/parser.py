@@ -53,12 +53,19 @@ class RedditParser(object):
             )
         )
 
+        r_walls = (w for w in r_walls if not w.is_self)
+
+        re_filter = config.get_re_filter()
+        if re_filter:
+            r_walls = (w for w in r_walls if re_filter.search(w.title))
+
+        r_walls = (
+            RedditWallpaperChooser.wallpaper.WebWallpaper(str(w), w.url)
+            for w in r_walls
+        )
+
         with self.semaphore:
-            self.walls |= {
-                RedditWallpaperChooser.wallpaper.WebWallpaper(str(w), w.url)
-                for w in r_walls
-                if not w.is_self
-            }
+            self.walls |= set(r_walls)
 
         logger.debug("Fetching from 'r/%s' completed.", subreddit)
 
