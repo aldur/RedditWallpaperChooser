@@ -127,11 +127,17 @@ class WebWallpaper(object):
         if not target_size and not target_ratio:
             return True
 
-        size_fits = all((
-            self.image_size.height >= target_size.height,
-            self.image_size.width >= target_size.width,
-        ))
-        aspect_ratio_fits = target_ratio == self.ratio
+        size_fits = False
+        aspect_ratio_fits = False
+
+        if target_size:
+            size_fits = all((
+                self.image_size.height >= target_size.height,
+                self.image_size.width >= target_size.width,
+            ))
+
+        if target_ratio:
+            aspect_ratio_fits = target_ratio == self.ratio
 
         if target_size and target_ratio:
             return size_fits and aspect_ratio_fits
