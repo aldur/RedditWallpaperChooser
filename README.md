@@ -53,14 +53,13 @@ In it, you can specify the following general options:
 
 - the subreddits to parse (`subreddits`)
 - the number of results per subreddit (`result_limit`)
-- your username and your password (just in case you need to increase Reddit API limits) (`username` and `password`)
 - the output directory (`output_folder`)
 - a regex filter to apply to the wallpaper names (`re_filter`)
 
 Additionally, you can also filter the candidate wallpapers to be selected and returned at the end of the download process:
 
 - by aspect ratio (`aspect_ratio`)
-- by size (`size`)
+- by minimum size (`size`)
 
 Until better documentation will be developed please refer to the default configuration options as a working example;
 You can dump it as follows:

@@ -17,8 +17,6 @@ __author__ = 'aldur'
 logger = logging.getLogger(__name__)
 
 SECTION_REDDIT = "reddit"
-REDDIT_USERNAME = "username"
-REDDIT_PASSWORD = "password"
 REDDIT_SUBREDDITS = "subreddits"
 REDDIT_RESULT_LIMIT = "result_limit"
 REDDIT_RE_FILTER = "re_filter"
@@ -30,8 +28,6 @@ WALLPAPER_FOLDER = "output_folder"
 
 _default_config = {
     SECTION_REDDIT: {
-        REDDIT_USERNAME: "",
-        REDDIT_PASSWORD: "",
         REDDIT_SUBREDDITS: "spaceporn, skyporn, earthporn, wallpapers, wallpaper",
         REDDIT_RESULT_LIMIT: "10",
         REDDIT_RE_FILTER: "",

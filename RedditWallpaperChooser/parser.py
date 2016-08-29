@@ -21,15 +21,11 @@ class RedditParser(object):
     """Parse subreddits and store a list of wallpapers."""
 
     def __init__(self):
-        self.r = praw.Reddit(
-            user_agent=RedditWallpaperChooser.constants.REDDIT_USER_AGENT
+        self.reddit = praw.Reddit(
+            user_agent=RedditWallpaperChooser.constants.REDDIT_USER_AGENT,
+            client_id=RedditWallpaperChooser.constants.REDDIT_CLIENT_ID,
+            client_secret=None,
         )
-
-        username = config.parser.get(config.SECTION_REDDIT, config.REDDIT_USERNAME)
-        password = config.parser.get(config.SECTION_REDDIT, config.REDDIT_PASSWORD)
-
-        if username and password:
-            self.r.login(user=username, password=password)
 
         subreddits = config.parser.get(
             config.SECTION_REDDIT, config.REDDIT_SUBREDDITS
@@ -47,10 +43,8 @@ class RedditParser(object):
         :subreddit: Subreddit to be parsed.
         """
         logger.info("Fetching wallpapers from 'r/%s'.", subreddit)
-        r_walls = self.r.get_subreddit(subreddit).get_hot(
-            limit=config.parser.getint(
-                config.SECTION_REDDIT, config.REDDIT_RESULT_LIMIT
-            )
+        r_walls = self.reddit.subreddit(subreddit).hot(
+            limit=config.parser.getint(config.SECTION_REDDIT, config.REDDIT_RESULT_LIMIT)
         )
 
         r_walls = (w for w in r_walls if not w.is_self)
