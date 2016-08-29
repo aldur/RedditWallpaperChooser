@@ -28,7 +28,7 @@ def store(wallpaper):
     try:
         r = requests.get(wallpaper.url, stream=True, timeout=10.0)
     except requests.exceptions.Timeout:
-        logger.warning("Timeout fired while downloading from %s.", wallpaper.url)
+        logger.warning("Timeout fired while downloading from '%s'.", wallpaper.url)
     else:
         # Set the content type / size.
         wallpaper.contentType = r.headers.get('content-type', None)
@@ -36,7 +36,7 @@ def store(wallpaper):
 
         accepted_contents_type = RedditWallpaperChooser.constants.ACCEPTED_CONTENT_TYPES
         if wallpaper.contentType not in accepted_contents_type:
-            logger.debug("Skipping not supported content-type: %s.", wallpaper.contentType)
+            logger.debug("Skipping not supported content-type: '%s'.", wallpaper.contentType)
             return
 
         if r.status_code == requests.codes.ok:
@@ -47,7 +47,7 @@ def store(wallpaper):
             wallpaper.store_header_info()
         else:
             logger.warning(
-                "Bad status code for wallpaper at %s: %d.",
+                "Bad status code for wallpaper at %s: '%d'.",
                 wallpaper.url,
                 r.status_code
             )

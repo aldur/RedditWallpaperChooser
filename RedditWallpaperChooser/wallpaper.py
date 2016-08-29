@@ -80,7 +80,7 @@ class WebWallpaper(object):
 
         RedditWallpaperChooser.remote.store(self)
 
-        logger.info("Wallpaper from %s successfully downloaded.", self.url)
+        logger.info("Wallpaper from '%s' successfully downloaded.", self.url)
 
     def parse_header_info(self):
         """
@@ -149,7 +149,7 @@ class WebWallpaper(object):
     @property
     def image_size(self):
         """
-        Return the image width and height as read the stored file.
+        Return the image width and height (from the stored file).
         """
         if not self.is_stored:
             logger.warning(
