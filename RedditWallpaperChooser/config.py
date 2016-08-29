@@ -8,6 +8,8 @@ Configuration logic.
 import configparser
 import logging
 
+import RedditWallpaperChooser.utils
+
 __author__ = 'aldur'
 
 
@@ -88,3 +90,41 @@ def write_default_config(config_path):
 
     with open(config_path, "w") as config_file:
         default_parser.write(config_file)
+
+
+def get_size():
+    """
+    Parse the configuration for target image size.
+
+    :return: An image size.
+    """
+    assert parser is not None
+
+    size = parser.get(SECTION_WALLPAPER, WALLPAPER_SIZE)
+    assert not size or "x" in size, "Malformed image size."
+
+    if not size:
+        return None
+
+    size = size.split("x")
+    assert len(size) == 2, "Malformed image size."
+
+    return RedditWallpaperChooser.utils.Size(int(size[0]), int(size[1]))
+
+
+def get_ratio():
+    """
+    Parse the configuration for target image ratio.
+
+    :return: The required image ration (as float).
+    """
+    ratio = parser.get(SECTION_WALLPAPER, WALLPAPER_ASPECT_RATIO)
+    assert not ratio or ":" in ratio, "Malformed image ratio."
+
+    if not ratio:
+        return None
+
+    ratio = ratio.split(":")
+    assert len(ratio) == 2, "Malformed image ratio."
+
+    return round(float(ratio[0]) / float(ratio[1]), 5)

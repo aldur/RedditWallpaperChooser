@@ -6,7 +6,6 @@
 import os.path
 import json
 import logging
-import collections
 
 # noinspection PyUnresolvedReferences
 import zlib
@@ -16,13 +15,10 @@ from PIL import Image
 
 import RedditWallpaperChooser.remote
 import RedditWallpaperChooser.constants
+import RedditWallpaperChooser.utils
 import RedditWallpaperChooser.config as config
 
 logger = logging.getLogger(__name__)
-
-Size = collections.namedtuple(
-    "Size", "width, height"
-)
 
 
 class WebWallpaper(object):
@@ -43,48 +39,6 @@ class WebWallpaper(object):
                 content_type
             )
         return content_types.get(content_type, "jpg")
-
-    @staticmethod
-    def size_from_config():
-        """
-        Parse the configuration for target image size.
-
-        :return: An image size.
-        """
-        size = config.parser.get(
-            config.SECTION_WALLPAPER,
-            config.WALLPAPER_SIZE
-        )
-
-        assert "x" in size, \
-            "Malformed image size."
-
-        size = size.split("x")
-        assert len(size) == 2, \
-            "Malformed image size."
-
-        return Size(int(size[0]), int(size[1]))
-
-    @staticmethod
-    def ratio_from_config():
-        """
-        Parse the configuration for target image ratio.
-
-        :return: The required image ration (as float).
-        """
-        ratio = config.parser.get(
-            config.SECTION_WALLPAPER,
-            config.WALLPAPER_ASPECT_RATIO,
-        )
-
-        assert ":" in ratio, \
-            "Malformed image ratio."
-
-        ratio = ratio.split(":")
-        assert len(ratio) == 2, \
-            "Malformed image ratio."
-
-        return round(float(ratio[0]) / float(ratio[1]), 5)
 
     def __init__(self, name, url):
         self.name = name
@@ -168,8 +122,8 @@ class WebWallpaper(object):
         if not self.is_stored:
             return False
 
-        target_size = type(self).size_from_config()
-        target_ratio = type(self).ratio_from_config()
+        target_size = config.get_size()
+        target_ratio = config.get_ratio()
         if not target_size and not target_ratio:
             return True
 
@@ -200,7 +154,7 @@ class WebWallpaper(object):
         _size = i.size
         i.close()
 
-        return Size(*_size)
+        return RedditWallpaperChooser.utils.Size(*_size)
 
     @property
     def ratio(self):
