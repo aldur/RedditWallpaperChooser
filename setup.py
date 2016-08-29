@@ -8,6 +8,8 @@ Python setup file.
 import setuptools
 import os.path
 
+from RedditWallpaperChooser import __version__
+
 __author__ = 'aldur'
 
 _readme = "README.md"
@@ -53,7 +55,7 @@ setuptools.setup(
     name='RedditWallpaperChooser',
     description='Automatically download the most trending wallpapers from subreddits of your choice.',
     long_description=readme(),
-    version='0.1',
+    version=__version__,
 
     url='https://github.com/aldur/RedditWallpaperChooser',
     license='MIT',
