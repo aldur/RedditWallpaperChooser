@@ -70,7 +70,7 @@ def parse_config(config_path):
     parser.read_dict(_default_config)
     if config_path:
         with open(config_path) as config_file:
-            logger.info("Loading configuration from: %s.", config_path)
+            logger.info("Loading configuration from: '%s'.", config_path)
             parser.read_file(config_file)
     else:
         logger.info("No configuration path provided. Loading default values.")

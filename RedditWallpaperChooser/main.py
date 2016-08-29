@@ -71,7 +71,7 @@ def _cmd_line_parser():
         return "-{}".format(s[0]), "--{}".format(s),
 
     parser = argparse.ArgumentParser(
-        description='Ripple analyzer.'
+        description='RedditWallpaperChooser'
     )
 
     parser.add_argument(
