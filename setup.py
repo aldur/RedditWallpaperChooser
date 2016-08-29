@@ -32,7 +32,7 @@ def requirements():
         return []
 
     with open(_requirements) as f:
-        return [line.rstrip().split("==")[0] for line in f]
+        return [line.rstrip() for line in f]
 
 
 def requirements_extras():
@@ -44,8 +44,7 @@ def requirements_extras():
 
     with open(_requirements_extra) as f:
         extra.update({
-            'extras':
-            [line.rstrip().split("==")[0] for line in f]
+            'extras': [line.rstrip() for line in f]
         })
 
     return extra
