@@ -6,6 +6,7 @@ Parse subreddits searching for wallpapers.
 """
 
 import asyncio
+import http
 import json
 import logging
 import os.path
@@ -53,7 +54,9 @@ class Manager(object):
         count = 0
         while count < subreddit_limit:
             async with session.get(url, params=params) as response:
-                assert response.status == 200  # TODO: error handling
+                if response.status != http.HTTPStatus.OK:
+                    logger.warning("Can't contact 'r/%s (status: %s).", subreddit, response.status)
+                    return
                 data = await response.json()
 
             walls, after = RedditWallpaperChooser.reddit.parse_listing(data)
@@ -102,7 +105,9 @@ class Manager(object):
             return
 
         async with session.get(wallpaper.url) as response:
-            assert response.status == 200  # TODO: error handling
+            if response.status != http.HTTPStatus.OK:
+                logger.warning("Bad status code from '%s' (%d).", wallpaper.url, response.status)
+                return
             wallpaper.set_image_type(response.headers["content-type"])
 
             with open(info_path, "w") as info_file:
