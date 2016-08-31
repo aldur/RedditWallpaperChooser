@@ -21,7 +21,7 @@ def parse_listing(listing):
     Parse a Reddit listing, looking for wallpaper links.
 
     :param listing: The listing to be parsed, i.e. a JSON as returned by an API call.
-    :return: A list of wallpapers.
+    :return: A list of wallpapers and the 'after' token, if any.
     """
     assert listing['kind'] == 'Listing'
     children = listing['data']['children']
@@ -30,7 +30,7 @@ def parse_listing(listing):
         parse_child(child)
         for child in children
         if child['kind'] == 't3'
-    ) if w is not None}
+    ) if w is not None}, listing['data'].get('after', None)
 
 
 def parse_child(child):
@@ -55,6 +55,6 @@ def parse_child(child):
         return RedditWallpaperChooser.wallpaper.WebWallpaper(
             title, url, RedditWallpaperChooser.utils.Size(width, height), subreddit
         )
-    except KeyError:  # Old posts do not have the 'preview' API field.
-        logger.warning("Ignoring '{}' - '{}' from 'r/{}'.".format(title, url, subreddit))
+    except KeyError as e:  # Old posts do not have the 'preview' API field.
+        logger.debug("Ignoring '{}' - '{}' from 'r/{}'.".format(title, url, subreddit))
         return None

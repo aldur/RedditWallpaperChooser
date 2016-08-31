@@ -43,22 +43,31 @@ class Manager(object):
         :param subreddit: Subreddit to be parsed.
         """
         logger.info("Fetching wallpapers from 'r/%s'.", subreddit)
+        subreddit_limit = config.parser.getint(config.SECTION_REDDIT, config.REDDIT_RESULT_LIMIT)
 
         # TODO: pagination!
 
-        url = "https://www.reddit.com/r/{}/top/.json".format(subreddit)
-        params = {
-            'limit': config.parser.getint(config.SECTION_REDDIT, config.REDDIT_RESULT_LIMIT)
-        }
+        url = "https://www.reddit.com/r/{}/hot/.json".format(subreddit)
+        params = {'limit': 100}
 
-        async with session.get(url, params=params) as response:
-            assert response.status == 200  # TODO: error handling
-            data = await response.json()
+        count = 0
+        while count < subreddit_limit:
+            async with session.get(url, params=params) as response:
+                assert response.status == 200  # TODO: error handling
+                data = await response.json()
 
-        self.walls |= {
-            w for w in RedditWallpaperChooser.reddit.parse_listing(data)
-            if w.fits(config.get_size(), config.get_ratio())
-        }
+            walls, after = RedditWallpaperChooser.reddit.parse_listing(data)
+            count += len(walls)
+
+            self.walls |= {
+                w for w in walls
+                if w.fits(config.get_size(), config.get_ratio())
+            }
+
+            if after is None:
+                break
+            params.update({'after': after})
+
         logger.debug("Fetching from 'r/%s' completed.", subreddit)
 
     def fetch(self):
@@ -68,6 +77,7 @@ class Manager(object):
         # TODO: limit concurrent number of requests to Reddit.
         with aiohttp.ClientSession(
             headers={"User-Agent": RedditWallpaperChooser.constants.REDDIT_USER_AGENT},
+            connector=aiohttp.TCPConnector(limit=5),
         ) as session:
             tasks = [
                 asyncio.ensure_future(self.fetch_from_subreddit(session, subreddit))
@@ -111,7 +121,9 @@ class Manager(object):
         Store the previously fetched wallpapers.
         """
         logger.info("Storing wallpapers...")
-        with aiohttp.ClientSession() as session:
+        with aiohttp.ClientSession(
+            connector=aiohttp.TCPConnector(limit=5),
+        ) as session:
             tasks = [
                 asyncio.ensure_future(self.store_wallpaper(session, wallpaper))
                 for wallpaper in self.walls
@@ -122,5 +134,6 @@ class Manager(object):
         """
         Choose one of the stored wallpapers and return its absolute path.
         """
+        assert self.walls
         return os.path.abspath(
             os.path.join(self.output_path, random.choice(tuple(self.walls)).output_path))
