@@ -18,6 +18,8 @@ import RedditWallpaperChooser.reddit
 import RedditWallpaperChooser.wallpaper
 import aiohttp
 
+__author__ = 'aldur'
+
 logger = logging.getLogger(__name__)
 
 
@@ -45,8 +47,6 @@ class Manager(object):
         """
         logger.info("Fetching wallpapers from 'r/%s'.", subreddit)
         subreddit_limit = config.parser.getint(config.SECTION_REDDIT, config.REDDIT_RESULT_LIMIT)
-
-        # TODO: pagination!
 
         url = "https://www.reddit.com/r/{}/hot/.json".format(subreddit)
         params = {'limit': 100}
@@ -77,7 +77,6 @@ class Manager(object):
         """
         Globally fetch trending walls from each subreddit.
         """
-        # TODO: limit concurrent number of requests to Reddit.
         with aiohttp.ClientSession(
             headers={"User-Agent": RedditWallpaperChooser.constants.REDDIT_USER_AGENT},
             connector=aiohttp.TCPConnector(limit=5),

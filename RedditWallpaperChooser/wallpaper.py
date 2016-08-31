@@ -9,6 +9,8 @@ import zlib
 import RedditWallpaperChooser.constants
 import RedditWallpaperChooser.utils
 
+__author__ = 'aldur'
+
 logger = logging.getLogger(__name__)
 
 
@@ -113,8 +115,3 @@ class WebWallpaper(object):
         assert self.image_type is not None, \
             "I need the image type to generate the output path."
         return "{}.{}".format(self.id, self.image_type)
-
-
-class ImgurWebWallpaper(WebWallpaper):
-    """Wallpapers from the Imgur hosting."""
-    pass

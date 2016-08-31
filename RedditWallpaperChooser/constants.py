@@ -5,6 +5,8 @@
 
 from RedditWallpaperChooser import __version__
 
+__author__ = 'aldur'
+
 # Reddit UserAgent.
 REDDIT_USER_AGENT = \
     "unix:RedditWallpaperChooser:{}" \

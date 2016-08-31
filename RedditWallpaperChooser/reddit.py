@@ -55,6 +55,6 @@ def parse_child(child):
         return RedditWallpaperChooser.wallpaper.WebWallpaper(
             title, url, RedditWallpaperChooser.utils.Size(width, height), subreddit
         )
-    except KeyError as e:  # Old posts do not have the 'preview' API field.
+    except KeyError:  # Old posts do not have the 'preview' API field.
         logger.debug("Ignoring '{}' - '{}' from 'r/{}'.".format(title, url, subreddit))
         return None

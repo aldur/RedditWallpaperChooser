@@ -14,6 +14,8 @@ import sys
 import RedditWallpaperChooser.config
 import RedditWallpaperChooser.manager
 
+__author__ = 'aldur'
+
 _config_file_path = "config"
 _default_config_file_path = "default_config"
 _log_level = "log_level"
