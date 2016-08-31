@@ -26,10 +26,10 @@ $ cd RedditWallpaperChooser
 $ pip install . .[extras]  # --user could also help you
 ```
 
-You'll find `RedditWallpaperChooser` in your `PATH`. You can now start collecting wallpapers.
+You'll find `reddit-wallpaper-chooser` in your `PATH`. You can now start collecting wallpapers.
 
 ```bash
-$ RedditWallpaperChooser
+$ reddit-wallpaper-chooser
 ```
 
 The absolute path of one of the downloaded wallpapers will be printed to standard output.
@@ -38,7 +38,7 @@ The absolute path of one of the downloaded wallpapers will be printed to standar
 
 As a bonus, on macOS, you can set the wallpaper to the one just downloaded for you:
 ```bash
-$ wall=$(./bin/RedditWallpaperChooser 2> /dev/null) && osascript -e "tell application \"Finder\" to set desktop picture to POSIX file \"$wall\""
+$ wall=$(reddit-wallpaper-chooser 2> /dev/null) && osascript -e "tell application \"Finder\" to set desktop picture to POSIX file \"$wall\""
 ```
 
 _Note_: due to a limitation of the macOS APIs, it will only change the wallpaper of the currently selected space.
@@ -61,13 +61,13 @@ Until better documentation will be developed please refer to the default configu
 You can dump it as follows:
 
 ```bash
-$ RedditWallpaperChooser -d config.ini
+$ reddit-wallpaper-chooser -d config.ini
 ```
 
 You can then use your configuration with:
 
 ```bash
-$ RedditWallpaperChooser -c config.ini
+$ reddit-wallpaper-chooser -c config.ini
 ```
 
 ## Future improvements

@@ -6,6 +6,7 @@ Python setup file.
 """
 
 import setuptools
+import os
 import os.path
 
 from RedditWallpaperChooser import __version__
@@ -67,9 +68,7 @@ setuptools.setup(
     ],
     install_requires=requirements(),
     extras_require=requirements_extras(),
-    scripts=[
-        "bin/RedditWallpaperChooser"
-    ],
+    scripts=[os.path.join('bin', f) for f in os.listdir('bin')],
 
     zip_safe=False,
     include_package_data=True,
