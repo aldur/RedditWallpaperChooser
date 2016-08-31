@@ -52,7 +52,7 @@ def requirements_extras():
 
 setuptools.setup(
     name='RedditWallpaperChooser',
-    description='Automatically download the most trending wallpapers from subreddits of your choice.',
+    description='Automatically download trending wallpapers from subreddits of your choice.',
     long_description=readme(),
     version=__version__,
 
@@ -74,5 +74,17 @@ setuptools.setup(
     zip_safe=False,
     include_package_data=True,
 
-    # TODO: include classifiers and keywords.
+    classifiers=[
+        'Development Status :: 5 - Production/Stable',
+        'Environment :: Console',
+        'Intended Audience :: End Users/Desktop',
+        'Intended Audience :: System Administrators',
+        'License :: OSI Approved :: MIT License',
+        'Programming Language :: Python :: 3 :: Only',
+        'Programming Language :: Python :: 3.5',
+        'Topic :: Desktop Environment',
+        'Topic :: Multimedia',
+        'Topic :: Utilities',
+    ],
+    keywords="Reddit subreddit wallpaper desktop"
 )
