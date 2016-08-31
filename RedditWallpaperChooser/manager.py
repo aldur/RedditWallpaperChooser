@@ -77,6 +77,7 @@ class Manager(object):
         """
         Globally fetch trending walls from each subreddit.
         """
+        logger.info("Fetching wallpapers list from subreddits...")
         with aiohttp.ClientSession(
             headers={"User-Agent": RedditWallpaperChooser.constants.REDDIT_USER_AGENT},
             connector=aiohttp.TCPConnector(limit=5),
@@ -133,6 +134,7 @@ class Manager(object):
                 for wallpaper in self.walls
             ]
             asyncio.get_event_loop().run_until_complete(asyncio.gather(*tasks))
+        logger.info("All done!")
 
     def choose(self):
         """
