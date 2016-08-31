@@ -75,7 +75,7 @@ def _cmd_line_parser():
         return "-{}".format(s[0]), "--{}".format(s),
 
     parser = argparse.ArgumentParser(
-        description='RedditWallpaperChooser'
+        description="Automatically download trending wallpapers from subreddits of your choice."
     )
 
     parser.add_argument(
@@ -83,7 +83,7 @@ def _cmd_line_parser():
         metavar="<configuration file path>",
         type=str,
         required=False,
-        help='path to a .ini configuration file'
+        help='path to a INI configuration file'
     )
 
     parser.add_argument(
@@ -91,7 +91,7 @@ def _cmd_line_parser():
         metavar="<default configuration file path>",
         type=str,
         required=False,
-        help='store default configuration to this .ini file and exit'
+        help='dump default configuration to this INI file and exit'
     )
 
     parser.add_argument(
@@ -101,9 +101,8 @@ def _cmd_line_parser():
                  'WARNING',
                  'INFO',
                  'DEBUG',
-                 'NOTSET',
-                 'NONE'],
-        default='DEBUG',  # TODO: change me
+                 'NOTSET'],
+        default='INFO',
         help="set logging level"
     )
 
