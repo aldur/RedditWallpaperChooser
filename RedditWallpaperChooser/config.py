@@ -18,6 +18,8 @@ logger = logging.getLogger(__name__)
 SECTION_REDDIT = "reddit"
 REDDIT_SUBREDDITS = "subreddits"
 REDDIT_RESULT_LIMIT = "result_limit"
+REDDIT_SORTING = "sorting"
+REDDIT_TIME = "time"
 
 SECTION_WALLPAPER = "wallpaper"
 WALLPAPER_SIZE = "size"
@@ -27,7 +29,9 @@ WALLPAPER_FOLDER = "output_folder"
 _default_config = {
     SECTION_REDDIT: {
         REDDIT_SUBREDDITS: "spaceporn, skyporn, earthporn, wallpapers, wallpaper",
+        REDDIT_SORTING: "hot",
         REDDIT_RESULT_LIMIT: "100",
+        REDDIT_TIME: "month",
     },
 
     SECTION_WALLPAPER: {

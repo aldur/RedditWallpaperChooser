@@ -12,10 +12,9 @@ import logging
 import os.path
 import random
 
-import RedditWallpaperChooser.config as config
-import RedditWallpaperChooser.constants
 import RedditWallpaperChooser.reddit
 import RedditWallpaperChooser.wallpaper
+from RedditWallpaperChooser import config, constants
 import aiohttp
 
 __author__ = 'aldur'
@@ -45,11 +44,20 @@ class Manager(object):
         :param session: An aiohttp session.
         :param subreddit: Subreddit to be parsed.
         """
-        logger.info("Fetching wallpapers from 'r/%s'.", subreddit)
+        sorting = config.parser.get(config.SECTION_REDDIT, config.REDDIT_SORTING)
+        assert sorting in constants.REDDIT_ALLOWED_SORTING
         subreddit_limit = config.parser.getint(config.SECTION_REDDIT, config.REDDIT_RESULT_LIMIT)
 
-        url = "https://www.reddit.com/r/{}/hot/.json".format(subreddit)
+        url = constants.REDDIT_API_FORMAT_URL.format(subreddit, sorting)
         params = {'limit': 100}
+
+        if sorting in constants.REDDIT_NEED_TIME:
+            t = config.parser.get(config.SECTION_REDDIT, config.REDDIT_TIME)
+            assert t in constants.REDDIT_ALLOWED_TIME
+            params.update({'t': t})
+            logger.info("Fetching %s/%s wallpapers from 'r/%s'.", sorting, t, subreddit)
+        else:
+            logger.info("Fetching %s wallpapers from 'r/%s'.", sorting, subreddit)
 
         count = 0
         while count < subreddit_limit:
