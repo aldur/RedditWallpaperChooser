@@ -1,8 +1,6 @@
 # RedditWallpaperChooser
 
-RedditWallpaperChooser will download from any subreddit of your choice the trending wallpapers of the day.
-
-__Caution:__ RedditWallpaperChooser is still a work in progress.
+RedditWallpaperChooser will download the trending wallpapers of the day from any subreddit of your choice.
 
 ## Features
 
@@ -32,7 +30,7 @@ You'll find `reddit-wallpaper-chooser` in your `PATH`. You can now start collect
 $ reddit-wallpaper-chooser
 ```
 
-The absolute path of one of the downloaded wallpapers will be printed to standard output.
+The absolute path of one of the downloaded wallpapers will be printed out to standard output.
 
 ### macOS
 
@@ -51,6 +49,8 @@ In it, you can specify the following general options:
 - the subreddits to parse (`subreddits`)
 - the number of results per subreddit (`result_limit`)
 - the output directory (`output_folder`)
+- the subreddit sorting (`sorting`)
+- a time parameter for 'top'/'controversial' sorting (`time`)
 
 Additionally, you can also filter the candidate wallpapers to be selected and returned at the end of the download process:
 
