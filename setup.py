@@ -51,13 +51,15 @@ def requirements_extras():
     return extra
 
 
+base_url = 'https://github.com/aldur/RedditWallpaperChooser'
 setuptools.setup(
     name='RedditWallpaperChooser',
     description='Automatically download trending wallpapers from subreddits of your choice.',
     long_description=readme(),
     version=__version__,
 
-    url='https://github.com/aldur/RedditWallpaperChooser',
+    url=base_url,
+    download_url='{}/releases/'.format(base_url),
     license='MIT',
 
     author='aldur',
@@ -73,6 +75,7 @@ setuptools.setup(
     zip_safe=False,
     include_package_data=True,
 
+    platforms=['any'],
     classifiers=[
         'Development Status :: 5 - Production/Stable',
         'Environment :: Console',

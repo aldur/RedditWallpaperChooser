@@ -6,4 +6,4 @@ RedditWallpaperChooser package.
 """
 
 __author__ = 'aldur'
-__version__ = '0.2'
+__version__ = '0.2.3'
