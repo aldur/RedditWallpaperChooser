@@ -1,5 +1,10 @@
 # RedditWallpaperChooser
 
+[![Version](https://img.shields.io/pypi/v/RedditWallpaperChooser.svg)](https://pypi.python.org/pypi/RedditWallpaperChooser)
+[![License](https://img.shields.io/pypi/l/RedditWallpaperChooser.svg)](https://pypi.python.org/pypi/RedditWallpaperChooser)
+[![Python Versions](https://img.shields.io/pypi/pyversions/RedditWallpaperChooser.svg)](https://pypi.python.org/pypi/RedditWallpaperChooser)
+[![Status](https://img.shields.io/pypi/status/RedditWallpaperChooser.svg)](https://pypi.python.org/pypi/RedditWallpaperChooser)
+
 RedditWallpaperChooser will download the trending wallpapers of the day from any subreddit of your choice.
 
 ## Features
@@ -14,15 +19,27 @@ For this reason, we only support Python versions ≥ 3.5.
 
 Additional requirements are listed in the `requirements.txt` file.
 
-## Installation & Usage
+## Installation
 
-Until RedditWallpaperChooser will land on PyPi you can install it as follows:
+### Installing from PyPi
+
+You can download and install RedditWallpaperChooser from PyPi, as follows:
+
+```bash
+$ pip install RedditWallpaperChooser[extras]  # --user or a virtualenv may be your friends
+```
+
+### Installing from source
+
+Alternatively, you can install from source:
 
 ```bash
 $ git clone https://github.com/aldur/RedditWallpaperChooser/
 $ cd RedditWallpaperChooser
-$ pip install . .[extras]  # --user could also help you
+$ pip install .[extras]
 ```
+
+## Usage
 
 You'll find `reddit-wallpaper-chooser` in your `PATH`. You can now start collecting wallpapers.
 
@@ -32,14 +49,15 @@ $ reddit-wallpaper-chooser
 
 The absolute path of one of the downloaded wallpapers will be printed out to standard output.
 
-### macOS
+### macOS - automatic wallpaper setup
 
 As a bonus, on macOS, you can set the wallpaper to the one just downloaded for you:
+
 ```bash
 $ wall=$(reddit-wallpaper-chooser 2> /dev/null) && osascript -e "tell application \"Finder\" to set desktop picture to POSIX file \"$wall\""
 ```
 
-_Note_: due to a limitation of the macOS APIs, it will only change the wallpaper of the currently selected space.
+_Note_: due to a limitation of the macOS APIs, this will only change the wallpaper of the currently selected space.
 
 ## Configuration
 
